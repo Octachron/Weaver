@@ -29,8 +29,7 @@ Timeline grammar :
 
 let window=Js.Unsafe.variable "window"
 
-let digit c = (int_of_char c) -48 
-			      
+let digit c = (int_of_char c) -48
 let parse_error s =
   window##alert(Js.string s)
 
@@ -39,34 +38,29 @@ let unexpected_end s=
 
 let expected_char c s =   parse_error @@ Printf.sprintf "Expected [%c] character when parsing %s" c s
 
-				
 let unexpected_char c s=
   parse_error @@ Printf.sprintf "Unexpected [%c] character when parsing %s" c s
 
-let unexpected c s = 
-  match c with 
+let unexpected c s =
+  match c with
   | None -> unexpected_end s
   | Some c -> unexpected_char c s
 
 let arity_error k =
-  parse_error @@ Printf.sprintf "No known action of arity %d " k  
+  parse_error @@ Printf.sprintf "No known action of arity %d " k
 
-			       
 let unknown_action s =
-  parse_error @@ Printf.sprintf "Unknown action %s " s  
+  parse_error @@ Printf.sprintf "Unknown action %s " s
 
-			      
-type interval = 
- | Interval of int*int 
- | Point of int 
+type interval =
+ | Interval of int*int
+ | Point of int
  | Right of int
 
 type action = Tag of string | Run of string | Suspend of string | Step of string
 
-	     
 type signal = { domain : interval list ; actions : action list }
 let default_tag = "activate"
-
 
 let print signals=
   let sp = Printf.sprintf in
@@ -193,35 +187,35 @@ let construct_chronology slide=
     | Right s -> {time=s;status=Activate; ev_actions; node = n} ::events in
   let add_signal n events (signal:signal) = 
     List.fold_left (add_interval n signal.actions) events signal.domain in
-  let add_timeline n attr events  = 
+  let add_timeline n attr events  =
     let timeline = parse @@ Js.to_string attr in
     List.fold_left (add_signal n) events timeline in
   let events = Utils.fold_attribute jtime add_timeline [] slide in
   let compare_event ev1 ev2 = compare ev1.time ev2.time in
   List.sort compare_event events
 
-		     
 let save_ast slide =
   let construct element attr =
     let tml = attr |> Js.to_string |> parse in
-    element##setAttribute(Js.string "tml_ast", Js.string @@  Marshal.to_string tml [] ) in
-  Utils.iter_attribute jtime construct (slide :> Dom.node Js.t ); slide 
+    element##(setAttribute
+                (Js.string "tml_ast")
+                (Js.string @@  Marshal.to_string tml []) ) in
+  Utils.iter_attribute jtime construct (slide :> Dom.node Js.t ); slide
 
 
 let tml_marker= "tmln_"
 
-let marker_on tag = 
-  Js.string ( tml_marker  ^ tag^"_on"  ) 
+let marker_on tag =
+  Js.string ( tml_marker  ^ tag^"_on"  )
 let marker_off tag =
-  Js.string( tml_marker ^ tag ^ "_off") 
+  Js.string( tml_marker ^ tag ^ "_off")
 
-let filter_kind base_filter signals = 
+let filter_kind base_filter signals =
   let fold_sign tags signal =  List.fold_left base_filter tags signal.actions  in
   signals
   |> List.fold_left fold_sign []
-  |> List.sort_uniq (compare:string->string->int) 
+  |> List.sort_uniq (compare:string->string->int)
 
-		    
 let tags signals=
   let add_if_tag l = function
     | Tag t -> t::l
@@ -233,47 +227,45 @@ let runs signals =
     | Run t -> t::l
     | _ -> l in
   filter_kind add_if_run signals
-		    
 
 let prepare_events_tags slide  =
   let prepare_et node  attr ()=
-    let cl = node##classList in
+    let cl = node##.classList in
     Js.to_string attr |> parse |> tags |>
       List.iter (fun tag -> cl##add(marker_off tag); cl##remove(marker_on tag) ) in
   Utils.fold_attribute jtime prepare_et () slide
-	   
-	   
+
 let clear_status slide =
   let clear_cl cl c =
-    let s= Js.to_string c in 
+    let s= Js.to_string c in
     if Utils.is_prefix tml_marker s then cl##remove(c) in
-  let clear element attr = 
-    let cl = element##classList in
+  let clear element attr =
+    let cl = element##.classList in
     Utils.classes_consume cl ( clear_cl cl) in
-  Utils.iter_attribute jtime clear slide 
+  Utils.iter_attribute jtime clear slide
 
 let reset_animations animator slide  =
   let stop element attr =
     attr |> Js.to_string |>  parse |> runs |> List.iter (fun name -> (animator name).run Desactivate element) in
   Utils.iter_attribute jtime stop slide
-		       
-let flow_event_to past target future test action = 
-  let rec move past = function 
+
+let flow_event_to past target future test action =
+  let rec move past = function
     | [] -> past, []
     | a::q when test a.time target -> action a; move (a::past) q
     | l -> past, l in
   move past future
 
-let reverse_status = function 
+let reverse_status = function
   | Activate -> Desactivate
-  | Desactivate -> Activate 
+  | Desactivate -> Activate
 
 let apply_tag_event e tag  =
-  let cl = e.node##classList in 
+  let cl = e.node##.classList in
   match e.status with
   | Activate  -> (
      cl##add(marker_on tag);
-     cl##remove(marker_off tag) ) 
+     cl##remove(marker_off tag) )
   | Desactivate ->(
      cl##remove(marker_on tag);
      cl##add(marker_off tag)
@@ -285,10 +277,9 @@ let apply_anim_event animator e=
   | Run a -> eval (animator a).run
   | Step a ->  eval (animator a).step
   | Suspend a -> eval (animator a).suspend
-  | Tag a -> apply_tag_event e a				      
+  | Tag a -> apply_tag_event e a
 
 let apply_event animator e =
   List.iter (apply_anim_event animator e) e.ev_actions
 
-	   
-let reverse_event animator e = apply_event animator { e with status = reverse_status e.status } 
+let reverse_event animator e = apply_event animator { e with status = reverse_status e.status }

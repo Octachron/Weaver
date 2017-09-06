@@ -10,6 +10,6 @@ Library weaver
   Path:       src
   BuildTools: ocamlbuild
   Pack:       true
-  BuildDepends: js_of_ocaml, js_of_ocaml.syntax
+  BuildDepends: js_of_ocaml, js_of_ocaml.ppx, lwt
   Modules:    Consts, Plot, Timeline, Decorations, Slides, Utils, Engine
 
