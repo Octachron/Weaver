@@ -33,7 +33,7 @@ let encapsulate new_father element =
   grand_father##(replaceChild new_father element) |> ignore;
   new_father##appendChild(element)
 
-let translate raw_slide =
+let translate (raw_slide:Dom_html.element Js.t) =
   let slide = create_slide () in
   let slide_interior = create_slide_interior () in
   let slide = Utils.transfer_attrs raw_slide slide in

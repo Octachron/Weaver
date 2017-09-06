@@ -95,9 +95,10 @@ let get_or_create name =
 
 let insertFirst p e = Dom.insertBefore p e @@ p##.firstChild
 
-let transfer_attrs origin target =
-  let transfer attr =  target##(setAttribute attr##name attr##value) in
-  node_iter origin##attributes transfer; target
+let transfer_attrs (origin:Dom_html.element Js.t)
+    (target:Dom_html.element Js.t) =
+  let transfer attr =  target##(setAttribute attr##.name attr##.value) in
+  node_iter (origin##.attributes) transfer; target
 
 let transfer_classes origin target =
   let clt = target##classList in

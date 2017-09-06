@@ -10,7 +10,7 @@ let unfocused  =
 
 let unfocus (element : #Dom.node Js.t)  = unfocused##appendChild((element :> Dom.node Js.t) )
 
-let slide_prepare slides =
+let slide_prepare (slides:Dom_html.element Dom.nodeList Js.t) =
   Utils.node_consume slides ( fun n ->
       n
       |> Slides.translate
