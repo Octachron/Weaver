@@ -112,7 +112,7 @@ let decr_time animator events frame_info =
   | _ -> reverse_events animator events
 
 let keyboard_action font_size animator events frame_info key handler=
-  let key = key##keyCode in
+  let key = key##.keyCode in
   match key  with
   | 37 | 38 -> Lwt.return @@ decr_time animator events frame_info
   | 39 | 40 -> Lwt.return @@ incr_time animator events frame_info
