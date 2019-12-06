@@ -1,3 +1,7 @@
+module Js = Js_of_ocaml.Js
+module Dom_html = Js_of_ocaml.Dom_html
+module CSS = Js_of_ocaml.CSS
+
 let may f = Utils.may f
 
 (** Plotting functions *)

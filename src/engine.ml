@@ -1,4 +1,6 @@
-
+module Js = Js_of_ocaml.Js
+module Dom_html = Js_of_ocaml.Dom_html
+module Dom = Js_of_ocaml.Dom
 
 open Consts
 
@@ -111,7 +113,7 @@ let decr_time animator events frame_info =
 		    ]
   | _ -> reverse_events animator events
 
-let keyboard_action font_size animator events frame_info key handler=
+let keyboard_action font_size animator events frame_info key _handler=
   let key = key##.keyCode in
   match key  with
   | 37 | 38 -> Lwt.return @@ decr_time animator events frame_info

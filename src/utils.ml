@@ -1,6 +1,9 @@
-
+module Js = Js_of_ocaml.Js
+module Jso = Js_of_ocaml
+module Dom_html = Jso.Dom_html
+module Dom = Jso.Dom
 let window = Js.Unsafe.variable "window"
-let document = Dom_html.document
+let document = Jso.Dom_html.document
 
 (** *)
 let seq_ x fs = List.iter (fun f -> f x) fs

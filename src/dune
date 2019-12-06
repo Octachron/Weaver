@@ -1,0 +1,5 @@
+(library
+  (public_name weaver)
+  (libraries js_of_ocaml lwt)
+  (preprocess (pps js_of_ocaml.ppx))
+)
