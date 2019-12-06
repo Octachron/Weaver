@@ -11,4 +11,6 @@ build: [
   ["dune" "build" "-p" name "-j" jobs]
 ]
 depends: ["dune""js_of_ocaml"]
-synopsis:"A presentation library"
+synopsis:"An ocaml library for html5 based presentation"
+descr:"Weaver is a library for writing html presentation using js_of_ocaml
++ CSS + html5."
