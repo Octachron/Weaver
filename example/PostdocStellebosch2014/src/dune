@@ -1,0 +1,7 @@
+(executable
+  (name main)
+  (libraries weaver js_of_ocaml js_of_ocaml-lwt)
+  (preprocess (pps js_of_ocaml.ppx))
+  (modes (byte js)))
+
+(alias (name all) (deps main.bc.js))
