@@ -12,6 +12,7 @@ let center document =
   Utils.node_iter targets center
 
 let css_width document =
-   let css_width_element element attr =
-     element##.style##.width := attr in
-  Utils.iter_attribute (Js.string "css-width") css_width_element ( document :> Dom.node Js.t)
+  let css_width_element element attr =
+    element##.style##.width := attr in
+  Utils.iter_attribute (Js.string "css-width") css_width_element
+    ( document :> Dom.node Js.t)

@@ -1,7 +1,5 @@
-module Js = Js_of_ocaml.Js
-module Dom_html = Js_of_ocaml.Dom_html
-module Dom = Js_of_ocaml.Dom
-
+open Js_of_ocaml
+open Consts
 
 (**
 Timeline grammar :
@@ -31,18 +29,20 @@ Timeline grammar :
 *)
 
 type tag = string
-let window=Js.Unsafe.variable "window"
 
 let digit c = (int_of_char c) -48
-let parse_error s =
-  window##alert(Js.string s)
 
-let unexpected_end s=
+let parse_error s =
+  window##alert(Js.string s);
+  failwith "timeline: parse error"
+
+let unexpected_end s =
   parse_error @@ Printf.sprintf "Unexpected end when parsing %s" s
 
-let expected_char c s =   parse_error @@ Printf.sprintf "Expected [%c] character when parsing %s" c s
+let expected_char c s =
+  parse_error @@ Printf.sprintf "Expected [%c] character when parsing %s" c s
 
-let unexpected_char c s=
+let unexpected_char c s =
   parse_error @@ Printf.sprintf "Unexpected [%c] character when parsing %s" c s
 
 let unexpected c s =
@@ -285,4 +285,5 @@ let apply_anim_event animator e=
 let apply_event animator e =
   List.iter (apply_anim_event animator e) e.ev_actions
 
-let reverse_event animator e = apply_event animator { e with status = reverse_status e.status }
+let reverse_event animator e =
+  apply_event animator { e with status = reverse_status e.status }

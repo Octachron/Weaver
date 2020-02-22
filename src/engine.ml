@@ -60,6 +60,9 @@ let prepare_events animator events slide =
 
 type frame_info = { n_slides: int; mutable current : int }
 
+let initial_frame_info n_slides =
+  { n_slides; current = 0 }
+
 let drop animator events frame_info =
   let focus = body##.firstChild
    and c = frame_info.current in
@@ -74,11 +77,13 @@ let drop animator events frame_info =
  Js.Opt.iter focus really_drop;
  reset_events events
 
-let pick_frame animator events k=
+let pick_frame animator events k =
   let cf=unfocused##.childNodes##item(k) in
   Js.Opt.map cf (fun x -> prepare_events animator events x; Utils.insertFirst body x )
+  |> ignore
 
-let pick animator events frame_info = pick_frame animator events frame_info.current  |> ignore
+let pick animator events frame_info =
+  pick_frame animator events frame_info.current
 
 let incr_slide frame_info =
   let c = frame_info.current in
@@ -113,7 +118,7 @@ let decr_time animator events frame_info =
 		    ]
   | _ -> reverse_events animator events
 
-let keyboard_action font_size animator events frame_info key _handler=
+let keyboard_action font_size animator events frame_info key _handler =
   let key = key##.keyCode in
   match key  with
   | 37 | 38 -> Lwt.return @@ decr_time animator events frame_info
