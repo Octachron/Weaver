@@ -1,9 +1,4 @@
-module Js = Js_of_ocaml.Js
-module Jso = Js_of_ocaml
-module Dom_html = Jso.Dom_html
-module Dom = Jso.Dom
-let window = Js.Unsafe.variable "window"
-let document = Jso.Dom_html.document
+open Js_of_ocaml
 
 (** *)
 let seq_ x fs = List.iter (fun f -> f x) fs
@@ -18,13 +13,16 @@ let nodelike_iter extract nl f =
     extract (nl##item(k)) f
   done
 
+let node_iter (nl: 'a Dom.nodeList Js.t) (f: 'a Js.t -> unit) =
+  nodelike_iter Js.Opt.iter nl f
 
-let node_iter nl f = nodelike_iter Js.Opt.iter nl f
+let classes_iter
+    (nl: Dom_html.tokenList Js.t)
+    (f: Js.js_string Js.t -> unit) =
+  nodelike_iter Js.Optdef.iter nl f
 
-let classes_iter nl f = nodelike_iter Js.Optdef.iter nl f
 
-
-let node_fold f start nl=
+let node_fold f start nl =
   let result = ref start in
   node_iter nl ( fun x -> result := f !result x );
   !result
@@ -33,10 +31,13 @@ let nodelike_consume iter nl f =
   let rec consume () = match nl##.length with
     | 0 -> ()
     | _ -> iter (nl##item(0)) f ; consume () in
-consume ()
+  consume ()
 
-let node_consume nl f= nodelike_consume Js.Opt.iter nl f
-let classes_consume nl f= nodelike_consume Js.Optdef.iter nl f
+let node_consume (nl: 'a Dom.nodeList Js.t) f =
+  nodelike_consume Js.Opt.iter nl f
+
+let classes_consume (nl: Dom_html.tokenList Js.t) f =
+  nodelike_consume Js.Optdef.iter nl f
 
 let node_iteri nl f =
   let n = nl##.length in
@@ -68,15 +69,19 @@ let split_string sep s =
 
 (** Iteration on attributes *)
 let fold_attribute attr f start origin =
-  let element_f n acc = match Js.Opt.to_option @@ n##getAttribute(attr) with
+  let element_f n acc =
+    match Js.Opt.to_option @@ n##getAttribute(attr) with
     | Some attr -> f n attr acc
     | None -> acc in
-  let node_f acc n = let e =  Dom_html.CoerceTo.element n in
-  match Js.Opt.to_option e with
-  | Some e ->  element_f e acc
-  | None -> acc  in
-let rec children acc parent = node_fold children (node_f acc parent) parent##.childNodes in
-children start origin
+  let node_f acc n =
+    let e = Dom_html.CoerceTo.element n in
+    match Js.Opt.to_option e with
+    | Some e -> element_f e acc
+    | None -> acc
+  in
+  let rec children acc parent =
+    node_fold children (node_f acc parent) parent##.childNodes in
+  children start origin
 
 let iter_attribute attr f origin =
   let element_f n = Js.Opt.iter ( n##getAttribute(attr) ) (f n)  in
@@ -87,28 +92,31 @@ let iter_attribute attr f origin =
 
 (**Conditionnal function *)
  let may f = function
-  | Some x-> f x
+  | Some x -> f x
+  | None -> ()
+
+let may_ctx (f: ctx:'a -> unit) = function
+  | Some ctx -> f ~ctx
   | None -> ()
 
 (** Dom manipulation *)
 let get_or_create name =
   let jname= Js.string name in
-  let m_element = document##(getElementsByTagName jname)##(item 0) in
-  Js.Opt.get m_element (fun () -> document##createElement(jname) )
+  let m_element = Dom_html.document##(getElementsByTagName jname)##(item 0) in
+  Js.Opt.get m_element (fun () -> Dom_html.document##createElement(jname) )
 
 let insertFirst p e = Dom.insertBefore p e @@ p##.firstChild
 
 let transfer_attrs (origin:Dom_html.element Js.t)
     (target:Dom_html.element Js.t) =
-  let transfer attr =  target##(setAttribute attr##.name attr##.value) in
-  node_iter (origin##.attributes) transfer; target
+  let transfer attr = target##(setAttribute attr##.name attr##.value) in
+  node_iter (origin##.attributes :> _ Dom.nodeList Js.t) transfer; target
 
-let transfer_classes origin target =
-  let clt = target##classList in
-  classes_iter (origin##classList) (fun c ->  clt##add(c) |> ignore );
+let transfer_classes (origin: Dom_html.element Js.t) (target: Dom_html.element Js.t) =
+  let clt = target##.classList in
+  classes_iter (origin##.classList) (fun c -> clt##add(c) |> ignore);
   target
 
-let transfer_childs origin target  =
+let transfer_childs (origin: Dom_html.element Js.t) (target: Dom_html.element Js.t)  =
   let transfer child = target##appendChild(child) |> ignore in
   node_consume (origin##.childNodes) transfer; target
-

@@ -1,3 +1,4 @@
+open Js_of_ocaml
 open Js_of_ocaml_lwt
 open Weaver
 open Consts
@@ -33,9 +34,7 @@ let animator s =
 
 
 let slides = Slides.getRaws document
-let frame_info =
-  let n_slides = slides##.length in
-  Engine.{n_slides; current=0}
+let frame_info = Engine.initial_frame_info slides##.length
 
 let events = ref Engine.no_events
 let font_size = ref 200
@@ -46,7 +45,7 @@ let () =
   let () = Slides.(  Utils.node_iter slides add_title ) in
   let () = Utils.seq_ document Decorations.[ center; css_width ] in
   let _ =
-    Lwt_js_events.keydowns window @@
+    Lwt_js_events.keydowns Dom_html.window @@
     Engine.keyboard_action font_size animator events frame_info
   in
-  ignore @@ Engine.pick_frame animator events 0
+  Engine.pick_frame animator events 0

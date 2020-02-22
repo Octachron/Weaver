@@ -74,29 +74,26 @@ let view vec =
 let timer = ref ( Lwt.return () )
 
 
-let draw_point vec ctx =
+let draw_point ~ctx vec =
   let (x,y) = view vec in
   ctx##fillRect x y scale scale
 
- let draw_path path ctx  =
-    List.iter (fun x -> draw_point x ctx) path
+let draw_path ~ctx path  =
+  List.iter (fun x -> draw_point ~ctx x) path
 
-let clear ctx = ctx##clearRect 0. 0. (ratio geom) 1.
+let clear ~ctx = ctx##clearRect 0. 0. (ratio geom) 1.
 
-let with_style style f ctx =
-  ctx##fillStyle := style; f ctx; ctx##fillStyle := Plot.black
-
-let draw path ctx =
+let draw ~ctx path =
   let (hx,hy) = view home in
-  clear ctx;
-  draw_path path ctx;
-  Plot.draw_image home_image (0.1,0.1) (hx-.0.05, hy -. 0.05) ctx
+  clear ~ctx;
+  draw_path ~ctx path;
+  Plot.draw_image ~ctx home_image (0.1,0.1) (hx-.0.05, hy -. 0.05)
 
 
-let happy_ending _env ctx =
-  clear ctx;
-  Plot.draw_image ant_image  (0.2, 0.2) (0.9, 0.6) ctx;
-  Plot.draw_image home_image  (0.5,0.5) (0.75,0.25) ctx
+let happy_ending ~ctx _env =
+  clear ~ctx;
+  Plot.draw_image ~ctx ant_image (0.2, 0.2) (0.9, 0.6);
+  Plot.draw_image ~ctx home_image (0.5,0.5) (0.75,0.25)
 
 let fold_rv f start gen_rv k  =
   let rec transform k state = match k with
@@ -106,13 +103,13 @@ let fold_rv f start gen_rv k  =
   transform k start
 
 let update_0 () =
-  let draw_ant ctx =
+  let draw_ant ~ctx =
     Plot.(
-      clear ctx;
-      draw_image ant_image (0.2,0.2) (0.2, 0.4 ) ctx;
-      draw_image home_image (0.1,0.1) (1.7, 0.4 ) ctx
+      clear ~ctx;
+      draw_image ~ctx ant_image (0.2,0.2) (0.2, 0.4 );
+      draw_image ~ctx home_image (0.1,0.1) (1.7, 0.4 )
     ) in
-  Lwt.return Utils.(may draw_ant !ctx)
+  Lwt.return Utils.(may_ctx draw_ant !ctx)
 
 let rec update ()=
   let path = !env  in
@@ -120,9 +117,9 @@ let rec update ()=
     let n_iter = t_scale @@ last path in
     let path = fold_rv (+>) path  rand n_iter in
     env := path ;
-    Utils.may (draw path) !ctx in
+    Utils.may_ctx (draw path) !ctx in
   if is_home (last path) then
-   (  Utils.may (happy_ending path)  !ctx; Lwt.return() )
+   (  Utils.may_ctx (happy_ending path)  !ctx; Lwt.return() )
   else
     Lwt.( Lwt_js.sleep phydt >>= update )
 
@@ -139,13 +136,13 @@ let stop _el  =
   Lwt.cancel !timer; timer := Lwt.return() ;
   reset() ;
   step_r := 0;
-  Utils.may (draw !env) !ctx
+  Utils.may_ctx (draw !env) !ctx
 
 let run status el =
   let open Timeline in
   match status with
-      |Activate -> start el
-      |Desactivate -> stop el
+  | Activate -> start el
+  | Desactivate -> stop el
 
 let steps = [|update_0; update |]
 let n_step = Array.length steps

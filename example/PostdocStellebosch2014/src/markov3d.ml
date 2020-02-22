@@ -70,26 +70,24 @@ let view theta vec =
 let timer = ref ( Lwt.return () )
 
 
-let draw_point vec theta ctx =
+let draw_point ~ctx vec theta =
   let (x,y) = view theta vec in
   ctx##fillRect x y scale scale
 
- let draw_path path theta ctx  =
-    List.iter (fun x -> draw_point x theta ctx) path
+ let draw_path ~ctx path theta =
+    List.iter (fun x -> draw_point ~ctx x theta) path
 
-let clear ctx = ctx##clearRect 0. 0. (ratio geom) 1.
+let clear ~ctx = ctx##clearRect 0. 0. (ratio geom) 1.
 
-let with_style style f ctx =
-  ctx##.fillStyle := style; f ctx; ctx##.fillStyle := Plot.black
-
-let draw path theta ctx =
+let draw ~ctx path theta =
   let hx,hy = view theta home in
-  clear ctx;
-  Plot.draw_image  home_image (0.05,0.05) (hx-.0.025,hy-.0.025) ctx;
-  draw_path path theta ctx
+  clear ~ctx;
+  Plot.draw_image ~ctx home_image (0.05,0.05) (hx-.0.025,hy-.0.025);
+  draw_path ~ctx path theta
 
-let happy_ending _env ctx =
-  with_style Plot.blueish (fun ctx -> ctx##fillRect 0. 0. (ratio geom) 1.) ctx
+let happy_ending ~ctx _env =
+  Plot.with_style ~ctx Plot.blueish
+    ~f:(fun ctx -> ctx##fillRect 0. 0. (ratio geom) 1.)
 
 let fold_rv f start gen_rv k  =
   let rec transform k state = match k with
@@ -98,16 +96,16 @@ let fold_rv f start gen_rv k  =
   in
   transform k start
 
-let rec update ()=
+let rec update () =
   let path = !env  in
   let () =
     let n_iter = t_scale @@ last path in
     let path = fold_rv (+>) path  rand n_iter in
     env := path ;
     let theta = time path |> theta_of_t in
-    Utils.may (draw path theta) !ctx in
+    Utils.may_ctx (draw path theta) !ctx in
   if is_home (last path) then
-   (  Utils.may (happy_ending path) !ctx; Lwt.return() )
+   (  Utils.may_ctx (happy_ending path) !ctx; Lwt.return() )
   else
     Lwt.( Lwt_js.sleep phydt >>= update )
 
@@ -122,13 +120,13 @@ let stop _el =
   Lwt.cancel !timer; timer := Lwt.return() ;
   reset() ;
   step_r := 0;
-  Utils.may (draw !env 0.) !ctx
+  Utils.may_ctx (draw !env 0.) !ctx
 
 let run status el =
   let open Timeline in
   match status with
-      |Activate -> start el
-      |Desactivate -> stop el
+  | Activate -> start el
+  | Desactivate -> stop el
 
 let step _status _el = ()
 

@@ -50,35 +50,35 @@ let ratio () = Plot.ratio !geom_r
 let scale ()  = ratio()   /. foi n_site
 let view k =
   let sc = scale() in
-  ( foi k  *. sc,  0.5 -. sc/. 2.   )
+  (foi k  *. sc,  0.5 -. sc/. 2.)
 
 let timer = ref ( Lwt.return () )
 
 
-let draw_site env k ctx =
+let draw_site ~ctx env k =
   let scale = scale() in
   let (x,y) = view k in
   if env.(k) = true then
     ctx##fillRect x y scale scale
 
 
- let draw_sites env ctx  =
-    Array.iteri (fun k _ -> draw_site env k ctx) env
+let draw_sites ~ctx env =
+  Array.iteri (fun k _ -> draw_site ~ctx env k) env
 
 
 let clear ctx = ctx##clearRect 0. 0. (ratio ()) 1.
 
 let draw asep ctx =
   clear ctx;
-  Plot.(with_style blue (draw_sites asep) ctx)
+  Plot.(with_style ~ctx blue ~f:(fun ctx -> draw_sites ~ctx asep))
 
 let repeat n f=
   for _ = 1 to n do f () done
 
 let n_iter = 100
 
-let rec update ()=
-  let asep = env  in
+let rec update () =
+  let asep = env in
   let () =
     repeat n_iter (evolve asep) ;
     Utils.may (draw asep) !ctx in

@@ -1,8 +1,6 @@
-open Js_of_ocaml
 open Js_of_ocaml_lwt
 open Weaver
 open Atmospheric_core
-let window= Js.Unsafe.variable "window"
 
 let dt = ref 0.05
 let step_r = ref 0
@@ -16,15 +14,16 @@ let env () =  env.(!step_r)
 
 
 
-let ctx : Dom_html.canvasRenderingContext2D Js.t option ref = ref None
+let ctx = ref None
 let geom = ref Plot.null_geometry
 let phydt = 0.025
 
-let draw_full env= let open Plot in
-  let clear ctx = ctx##clearRect 0. 0. 1. 1. in
-  may clear !ctx;
-  may draw_cube !ctx;
-  may (draw env) !ctx
+let draw_full env =
+  let open Plot in
+  let clear ~ctx = ctx##clearRect 0. 0. 1. 1. in
+  Utils.may_ctx clear !ctx;
+  Utils.may_ctx draw_cube !ctx;
+  Utils.may_ctx (draw env) !ctx
 
 
 let rec update ()=

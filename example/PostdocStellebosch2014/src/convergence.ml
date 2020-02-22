@@ -31,7 +31,7 @@ let rand () = float_of_int @@ Random.int 2
 
 
 
-let draw_partial env k ctx =
+let draw_partial ~ctx env k =
   let open Plot in
   let exp = env.(k) in
   let padding = 0.1 in
@@ -75,7 +75,7 @@ let rec update_0 ()=
   let exp = env.(0) in
   let () =
     env.(0) <- exp +> rand ()  ;
-    Utils.may (draw_partial env 0) !ctx in
+    Utils.may_ctx (draw_partial env 0) !ctx in
    Lwt.( Lwt_js.sleep phydt >>= update_0 )
 
 let start _el =
@@ -89,13 +89,13 @@ let stop _el  =
   Lwt.cancel !timer; timer := Lwt.return() ;
   reset() ;
   step_r := 0;
-  Utils.may (draw_partial env 0) !ctx
+  Utils.may_ctx (draw_partial env 0) !ctx
 
 let run status el =
   let open Timeline in
   match status with
-      |Activate -> start el
-      |Desactivate -> stop el
+  | Activate -> start el
+  | Desactivate -> stop el
 
 let step _status _el = ()
 
