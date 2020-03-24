@@ -1,9 +1,0 @@
-true: use-ocamlfind
-
-<src> : include
-
-<src/*.ml>: package(js_of_ocaml), package(js_of_ocaml.syntax), syntax(camlp4o), package(weaver)
-
-<*.ml>: package(js_of_ocaml), package(js_of_ocaml.syntax), syntax(camlp4o), package(weaver)
-
-<main.byte>: package(js_of_ocaml), package(js_of_ocaml.syntax), syntax(camlp4o), package(weaver)

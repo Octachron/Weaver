@@ -14,8 +14,9 @@ let null_geometry = { w= 0.; h=0. }
 let ratio {w;h}  = w /. h
 let horizontal {w;h} = w > h
 
-let min_g g = let w = min g.w g.h in
-	      { w; h=w }
+let min_g g =
+  let w = min g.w g.h in
+	{ w; h=w }
 
 
 let scale_geometry geometry ctx =
@@ -29,7 +30,7 @@ let draw_image img (w,h) (x,y) ctx=
   let gi = inv g in
   let p = gi %% p  in
   ctx |> scale_geometry g;
-  ctx##drawImage(img,p.w,p.h);
+  ctx##drawImage img p.w p.h;
   ctx |> scale_geometry (gi)
 
 
@@ -56,18 +57,19 @@ let with_style style f ctx =
 let draw_circle ctx radius (x,y,z) =
   let yp = 0.5 +. 0.5 *.y -. 0.25 *.( x +. z ) in
   let xp = 0.5 +. sq3o4 *. ( x -. z ) in
-  ctx##beginPath();
-  ctx##arc(xp,yp,radius,0.,6.3, Js._false);
-  ctx##fill()
+  ctx##beginPath;
+  ctx##arc xp yp radius 0. 6.3 Js._false;
+  ctx##fill;
+  ()
 
 let draw_quad close ctx (x0,y0) (tx1,ty1) (tx2,ty2) =
-  ctx##beginPath();
-  ctx##moveTo (x0,y0);
+  ctx##beginPath;
+  ctx##moveTo x0 y0;
   let x1,y1 = x0 +. tx1, y0 +. ty1 in
-  ctx##lineTo(x1,y1);
-  ctx##lineTo(x1+.tx2,y1+.ty2);
-  ctx##lineTo(x0+.tx2,y0+.ty2);
-  ctx##closePath();
+  ctx##lineTo x1 y1;
+  ctx##lineTo (x1+.tx2) (y1+.ty2);
+  ctx##lineTo (x0+.tx2) (y0+.ty2);
+  ctx##closePath;
   close(ctx)
 
 let draw_para close ctx start v1 v2 v3 =
@@ -75,7 +77,7 @@ let draw_para close ctx start v1 v2 v3 =
     quad v1 v3; quad v2 v3; quad v1 v2
 
 let draw_cube ctx =
-  let close ctx = ctx##stroke() in
+  let close ctx = ctx##stroke in
   let start =  (0.5,0.5) in
   let l = sq3o4,-0.25 and r = -.sq3o4, -0.25 and d=(0.,0.5) in
   draw_para close ctx start l r d
